@@ -37240,7 +37240,7 @@ class Block extends _pixiJs.Sprite {
     constructor(texture){
         super(texture);
         this.x = 350;
-        this.y = 150;
+        this.y = 278;
         this.width = 70;
         this.height = 72;
     }
