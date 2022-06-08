@@ -572,11 +572,13 @@ class Game {
         }
         this.char.collisionHorizontal(this.ground);
         this.char.collisionHorizontal(this.block);
+        this.char.collisionVerticalBottom(this.block);
+        this.char.collisionVerticalBottom(this.ground);
     }
 }
 new Game();
 
-},{"pixi.js":"dsYej","./test_char":"dgjcY","./test_ground":"3iHDY","./test_block":"jTCzO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../../images/Char1_1.png":"93Ssn","../../images/test_background2.jpg":"dzfzE","../../images/test_ground2.jpg":"e6xBY","../../images/block.jpg":"btpT8"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","../../images/Char1_1.png":"93Ssn","../../images/test_background2.jpg":"dzfzE","../../images/test_ground2.jpg":"e6xBY","../../images/block.jpg":"btpT8","./test_char":"dgjcY","./test_ground":"3iHDY","./test_block":"jTCzO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37073,7 +37075,53 @@ function __extends(d, b) {
     return AnimatedSprite1;
 }(_sprite.Sprite);
 
-},{"@pixi/core":"7PEF8","@pixi/sprite":"9mbxh","@pixi/ticker":"8ekG7","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dgjcY":[function(require,module,exports) {
+},{"@pixi/core":"7PEF8","@pixi/sprite":"9mbxh","@pixi/ticker":"8ekG7","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"93Ssn":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "Char1_1.9c17b06b.png" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"lgJ39":[function(require,module,exports) {
+"use strict";
+var bundleURL = {};
+function getBundleURLCached(id) {
+    var value = bundleURL[id];
+    if (!value) {
+        value = getBundleURL();
+        bundleURL[id] = value;
+    }
+    return value;
+}
+function getBundleURL() {
+    try {
+        throw new Error();
+    } catch (err) {
+        var matches = ('' + err.stack).match(/(https?|file|ftp):\/\/[^)\n]+/g);
+        if (matches) // The first two stack frames will be this function and getBundleURLCached.
+        // Use the 3rd one, which will be a runtime in the original bundle.
+        return getBaseURL(matches[2]);
+    }
+    return '/';
+}
+function getBaseURL(url) {
+    return ('' + url).replace(/^((?:https?|file|ftp):\/\/.+)\/[^/]+$/, '$1') + '/';
+} // TODO: Replace uses with `new URL(url).origin` when ie11 is no longer supported.
+function getOrigin(url) {
+    var matches = ('' + url).match(/(https?|file|ftp):\/\/[^/]+/);
+    if (!matches) throw new Error('Origin not found');
+    return matches[0];
+}
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+exports.getOrigin = getOrigin;
+
+},{}],"dzfzE":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "test_background2.ba851580.jpg" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"e6xBY":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "test_ground2.5cd69eba.jpg" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"btpT8":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "block.5ab50184.jpg" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"dgjcY":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Char", ()=>Char
@@ -37112,7 +37160,11 @@ class Char extends _pixiJs.Sprite {
         if (this.x > object.x + object.width || this.x + this.width < object.x || this.y > object.y + object.height || this.y + this.height < object.y) return false;
         else return true;
     }
-    collisionVerticalBottom(object) {}
+    collisionVerticalBottom(object) {
+        if (this.y + this.height > object.y && this.y < object.y + object.height) {
+            if (this.x + this.width > object.x && this.x < object.x + object.width) this.yspeed = 3;
+        }
+    }
     collisionHorizontal(object) {
         if (this.x + this.width >= object.x && this.x + this.width < object.x + object.width) {
             if (this.y === object.y || this.y - this.height + 5 < object.y && this.y > object.y - object.height) {
@@ -37188,58 +37240,12 @@ class Block extends _pixiJs.Sprite {
     constructor(texture){
         super(texture);
         this.x = 350;
-        this.y = 278;
+        this.y = 150;
         this.width = 70;
         this.height = 72;
     }
 }
 
-},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"93Ssn":[function(require,module,exports) {
-module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "Char1_1.9c17b06b.png" + "?" + Date.now();
-
-},{"./helpers/bundle-url":"lgJ39"}],"lgJ39":[function(require,module,exports) {
-"use strict";
-var bundleURL = {};
-function getBundleURLCached(id) {
-    var value = bundleURL[id];
-    if (!value) {
-        value = getBundleURL();
-        bundleURL[id] = value;
-    }
-    return value;
-}
-function getBundleURL() {
-    try {
-        throw new Error();
-    } catch (err) {
-        var matches = ('' + err.stack).match(/(https?|file|ftp):\/\/[^)\n]+/g);
-        if (matches) // The first two stack frames will be this function and getBundleURLCached.
-        // Use the 3rd one, which will be a runtime in the original bundle.
-        return getBaseURL(matches[2]);
-    }
-    return '/';
-}
-function getBaseURL(url) {
-    return ('' + url).replace(/^((?:https?|file|ftp):\/\/.+)\/[^/]+$/, '$1') + '/';
-} // TODO: Replace uses with `new URL(url).origin` when ie11 is no longer supported.
-function getOrigin(url) {
-    var matches = ('' + url).match(/(https?|file|ftp):\/\/[^/]+/);
-    if (!matches) throw new Error('Origin not found');
-    return matches[0];
-}
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-exports.getOrigin = getOrigin;
-
-},{}],"dzfzE":[function(require,module,exports) {
-module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "test_background2.ba851580.jpg" + "?" + Date.now();
-
-},{"./helpers/bundle-url":"lgJ39"}],"e6xBY":[function(require,module,exports) {
-module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "test_ground2.5cd69eba.jpg" + "?" + Date.now();
-
-},{"./helpers/bundle-url":"lgJ39"}],"btpT8":[function(require,module,exports) {
-module.exports = require('./helpers/bundle-url').getBundleURL('jNZNM') + "block.5ab50184.jpg" + "?" + Date.now();
-
-},{"./helpers/bundle-url":"lgJ39"}]},["5SDKt","1e2tt"], "1e2tt", "parcelRequirefac4")
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["5SDKt","1e2tt"], "1e2tt", "parcelRequirefac4")
 
 //# sourceMappingURL=index.463c70ca.js.map
