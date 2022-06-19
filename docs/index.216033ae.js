@@ -530,6 +530,7 @@ var _blockJpgDefault = parcelHelpers.interopDefault(_blockJpg);
 var _testChar = require("./test_char");
 var _testGround = require("./test_ground");
 var _testBlock = require("./test_block");
+var _background = require("./background");
 class Game {
     pixiWidth = 800;
     pixiHeight = 450;
@@ -547,10 +548,8 @@ class Game {
         );
     }
     loadCompleted() {
-        let background = new _pixiJs.Sprite(this.loader.resources["backgroundTexture"].texture);
-        background.height = this.pixiHeight;
-        background.width = this.pixiWidth;
-        this.pixi.stage.addChild(background);
+        this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixiWidth, this.pixiHeight);
+        this.pixi.stage.addChild(this.background);
         this.ground = new _testGround.Ground(this.loader.resources["groundTexture"].texture);
         this.pixi.stage.addChild(this.ground);
         this.block = new _testBlock.Block(this.loader.resources["blockTexture"].texture);
@@ -578,7 +577,7 @@ class Game {
 }
 new Game();
 
-},{"pixi.js":"dsYej","../../images/Char1_1.png":"bI3sK","../../images/test_background2.jpg":"a7lkD","../../images/test_ground2.jpg":"oNQ9A","../../images/block.jpg":"4sQHj","./test_char":"gp4to","./test_ground":"jEQJV","./test_block":"hjnnz","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","../../images/Char1_1.png":"bI3sK","../../images/test_background2.jpg":"a7lkD","../../images/test_ground2.jpg":"oNQ9A","../../images/block.jpg":"4sQHj","./test_char":"gp4to","./test_ground":"jEQJV","./test_block":"hjnnz","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./background":"l9Hyw"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37290,6 +37289,20 @@ class Block extends _pixiJs.Sprite {
         this.y = 150;
         this.width = 70;
         this.height = 72;
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"l9Hyw":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Background", ()=>Background
+);
+var _pixiJs = require("pixi.js");
+class Background extends _pixiJs.Sprite {
+    constructor(texture, width, height){
+        super(texture);
+        this.width = width;
+        this.height = height;
     }
 }
 

@@ -5,6 +5,7 @@ import testGround from '../../images/test_ground2.jpg';
 
 import { Char } from './test_char';
 import { Ground } from './test_ground';
+import { Background } from './background';
 
 export class Game{
     pixiWidth = 800;
@@ -15,6 +16,7 @@ export class Game{
 
     char : Char;
     ground : Ground;
+    background : Background;
 
     constructor(){
         this.pixi = new PIXI.Application({width: this.pixiWidth, height: this.pixiHeight});
@@ -31,10 +33,8 @@ export class Game{
     }
 
     loadCompleted(){
-        let background = new PIXI.Sprite(this.loader.resources["backgroundTexture"].texture!);
-        background.height = this.pixiHeight;
-        background.width = this.pixiWidth;
-        this.pixi.stage.addChild(background);
+        this.background = new Background(this.loader.resources["backgroundTexture"].texture!, this.pixiWidth, this.pixiHeight);
+        this.pixi.stage.addChild(this.background);
 
         this.ground = new Ground(this.loader.resources["groundTexture"].texture!);
         this.pixi.stage.addChild(this.ground);
