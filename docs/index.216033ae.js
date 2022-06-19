@@ -518,7 +518,9 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Game", ()=>Game
 );
+// Import PIXI
 var _pixiJs = require("pixi.js");
+// Import Images
 var _char11Png = require("../../images/Char1_1.png");
 var _char11PngDefault = parcelHelpers.interopDefault(_char11Png);
 var _testBackground2Jpg = require("../../images/test_background2.jpg");
@@ -527,14 +529,17 @@ var _testGround2Jpg = require("../../images/test_ground2.jpg");
 var _testGround2JpgDefault = parcelHelpers.interopDefault(_testGround2Jpg);
 var _blockJpg = require("../../images/block.jpg");
 var _blockJpgDefault = parcelHelpers.interopDefault(_blockJpg);
+// Import Classes
 var _testChar = require("./test_char");
 var _testGround = require("./test_ground");
 var _testBlock = require("./test_block");
 var _background = require("./background");
 class Game {
+    // Globals
     pixiWidth = 800;
     pixiHeight = 450;
     constructor(){
+        // Create PIXI Stage
         this.pixi = new _pixiJs.Application({
             width: this.pixiWidth,
             height: this.pixiHeight
@@ -542,35 +547,46 @@ class Game {
         this.pixi.stage.interactive = true;
         this.pixi.stage.hitArea = this.pixi.renderer.screen;
         document.body.appendChild(this.pixi.view);
+        // Create Loader
         this.loader = new _pixiJs.Loader();
         this.loader.add('charTexture', _char11PngDefault.default).add('backgroundTexture', _testBackground2JpgDefault.default).add('groundTexture', _testGround2JpgDefault.default).add('blockTexture', _blockJpgDefault.default);
         this.loader.load(()=>this.loadCompleted()
         );
     }
     loadCompleted() {
+        // Adding background to game
         this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixiWidth, this.pixiHeight);
         this.pixi.stage.addChild(this.background);
+        // Adding ground to game
         this.ground = new _testGround.Ground(this.loader.resources["groundTexture"].texture);
         this.pixi.stage.addChild(this.ground);
+        // Adding block to game
         this.block = new _testBlock.Block(this.loader.resources["blockTexture"].texture);
         this.pixi.stage.addChild(this.block);
+        // Adding player to game
         this.char = new _testChar.Char(this.loader.resources["charTexture"].texture);
         this.pixi.stage.addChild(this.char);
+        // Update
         this.pixi.ticker.add((delta)=>this.update(delta)
         );
     }
     update(delta) {
+        // Update player
         this.char.update(delta);
+        // Vertical collision player with ground
         if (this.char.collisionVerticalTop(this.ground) && this.char.y + this.char.height < this.ground.y + this.char.yspeed) {
             this.char.y = this.ground.y - this.char.height;
             this.char.yspeed = 0;
         }
+        // Vertical collision player with block
         if (this.char.collisionVerticalTop(this.block) && this.char.y + this.char.height < this.block.y + this.char.yspeed) {
             this.char.y = this.block.y - this.char.height;
             this.char.yspeed = 0;
         }
+        // Horizontal collision player with ground & block
         this.char.collisionHorizontal(this.ground);
         this.char.collisionHorizontal(this.block);
+        // Vertical bottom collision player with ground & block
         this.char.collisionVerticalBottom(this.block);
         this.char.collisionVerticalBottom(this.ground);
     }
@@ -37125,7 +37141,9 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Char", ()=>Char
 );
+// Import PIXI
 var _pixiJs = require("pixi.js");
+// Import sounds
 var _jumpWav = require("url:../../sound/jump.wav");
 var _jumpWavDefault = parcelHelpers.interopDefault(_jumpWav);
 var _deathWav = require("url:../../sound/death.wav");
@@ -37137,6 +37155,7 @@ var _pushWavDefault = parcelHelpers.interopDefault(_pushWav);
 var _headBumpWav = require("url:../../sound/head_bump.wav");
 var _headBumpWavDefault = parcelHelpers.interopDefault(_headBumpWav);
 class Char extends _pixiJs.Sprite {
+    // Globals
     xspeed = 0;
     yspeed = 3;
     weigth = 0.3;
@@ -37144,6 +37163,7 @@ class Char extends _pixiJs.Sprite {
     walkLeft = false;
     walkLeftLock = false;
     walkRightLock = false;
+    // Sounds
     jumpSound = new Audio(_jumpWavDefault.default);
     deathSound = new Audio(_deathWavDefault.default);
     footstepSound = new Audio(_footstepWavDefault.default);
@@ -37152,64 +37172,92 @@ class Char extends _pixiJs.Sprite {
     constructor(texture){
         super(texture);
         this.anchor.set(0);
+        // Setting start position
         this.x = 80;
         this.y = 60;
+        // Setting width & height
         this.width = 51;
         this.height = 72;
+        // Adding event listeners for keyboard
         window.addEventListener("keydown", (e)=>this.onKeyDown(e)
         );
         window.addEventListener("keyup", (e)=>this.onKeyUp(e)
         );
     }
     update(delta) {
+        // player movement & speed
         this.x += delta * this.xspeed;
         this.y += delta * this.yspeed;
+        // player gravity
         this.yspeed += this.weigth;
+        // Fall offscreen
         if (this.y > 500) {
             this.deathSound.play();
             this.resetPosition();
         }
+        // Walk left
         if (this.walkLeft === true) this.xspeed = -5;
+        // Walk right
         if (this.walkRight === true) this.xspeed = 5;
+        // Stop walking
         if (this.walkLeft === false && this.walkRight === false) this.xspeed = 0;
     }
     collisionVerticalTop(object) {
-        if (this.x > object.x + object.width || this.x + this.width < object.x || this.y > object.y + object.height || this.y + this.height < object.y) return false;
-        else return true;
+        if (this.x > object.x + object.width || this.x + this.width < object.x || this.y > object.y + object.height || this.y + this.height < object.y) // Return false if the player doesn't stand on/in the object
+        return false;
+        else // Return true if the player stands on/in the object
+        return true;
     }
     collisionVerticalBottom(object) {
-        if (this.y + this.height > object.y && this.y < object.y + object.height) {
+        // If the the top of the player is higher than the bottom of the object but smaller than the top of the object: return true
+        if (this.y + this.height > object.y && this.y < object.y + object.height) // If the right side of the player is bigger than the left side of the object...
+        // AND the left side of the player is smaller than the right side of the object: return true
+        {
             if (this.x + this.width > object.x && this.x < object.x + object.width) {
+                // If both statements are true, the player will fall down
                 this.yspeed = 3;
                 this.headBumpSound.play();
             }
         }
     }
     collisionHorizontal(object) {
-        if (this.x + this.width >= object.x && this.x + this.width < object.x + object.width) {
+        // If the right side of the player is or is bigger than the left side of the object...
+        // AND the right side of the player is smaller than the right side of the object: return true
+        if (this.x + this.width >= object.x && this.x + this.width < object.x + object.width) // If the player is not higher or smaller than the top and bottom of the object: return true
+        {
             if (this.y === object.y || this.y - this.height + 5 < object.y && this.y > object.y - object.height) {
+                // If both statements are true, the player stops walking to the right
                 this.walkRightLock = true;
                 this.walkRight = false;
                 this.x = object.x - this.width - 1;
                 this.pushSound.play();
             }
-        } else this.walkRightLock = false;
-        if (this.x <= object.x + object.width && this.x > object.x) {
+        } else // Else the lock of walking right is false, so the player can walk to the right
+        this.walkRightLock = false;
+        // If the left side of the player is or is smaller than the right side of the object...
+        // AND the left side of the player is bigger than the left side of the object: return true
+        if (this.x <= object.x + object.width && this.x > object.x) // If the player is not higher or smaller than the top and bottom of the object: return true
+        {
             if (this.y === object.y || this.y - this.height + 5 < object.y && this.y > object.y - object.height) {
+                // If both statements are true, the player stops walking to the left
                 this.walkLeftLock = true;
                 this.walkLeft = false;
                 this.x = object.x + object.width + 1;
                 this.pushSound.play();
             }
-        } else this.walkLeftLock = false;
+        } else // Else the lock of walking left is false, so the player can walk to the left
+        this.walkLeftLock = false;
     }
     resetPosition() {
+        // The respawn position of the player
         this.x = 80;
         this.y = 60;
     }
     onKeyDown(e) {
         if (e.key === " " || e.key === "ArrowUp" || e.key === "w") {
             if (this.yspeed === 0) {
+                // The player jumps if the character stands on an object...
+                // AND if space, arrow up or W is pressed
                 this.yspeed = -9;
                 this.jumpSound.play();
             }
@@ -37218,6 +37266,8 @@ class Char extends _pixiJs.Sprite {
             case "A":
             case "ARROWLEFT":
                 if (!this.walkLeftLock) {
+                    // The player walks to the left if the walk left lock is false...
+                    // AND the arrow left or A is pressed
                     this.walkLeft = true;
                     this.footstepSound.play();
                 }
@@ -37225,6 +37275,8 @@ class Char extends _pixiJs.Sprite {
             case "D":
             case "ARROWRIGHT":
                 if (!this.walkRightLock) {
+                    // The player walks to the right if the walk rigth lock is false...
+                    // AND the arrow right or D is pressed
                     this.walkRight = true;
                     this.footstepSound.play();
                 }
@@ -37235,10 +37287,12 @@ class Char extends _pixiJs.Sprite {
         switch(e.key.toUpperCase()){
             case "A":
             case "ARROWLEFT":
+                // The player stops walking to the left if arrow left or A is no longer pressed
                 this.walkLeft = false;
                 break;
             case "D":
             case "ARROWRIGHT":
+                // The player stops walking to the right if arrow right or D is no longer pressed
                 this.walkRight = false;
                 break;
         }
@@ -37265,12 +37319,15 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Ground", ()=>Ground
 );
+// Import PIXI
 var _pixiJs = require("pixi.js");
 class Ground extends _pixiJs.Sprite {
     constructor(texture){
         super(texture);
+        // Setting the start position
         this.x = 0;
         this.y = 350;
+        // Setting the width & height
         this.width = 500;
         this.height = 70;
     }
@@ -37281,12 +37338,15 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Block", ()=>Block
 );
+// Import PIXI
 var _pixiJs = require("pixi.js");
 class Block extends _pixiJs.Sprite {
     constructor(texture){
         super(texture);
+        // Setting the start position
         this.x = 350;
         this.y = 150;
+        // Setting the width & height
         this.width = 70;
         this.height = 72;
     }
@@ -37297,10 +37357,12 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Background", ()=>Background
 );
+// Import PIXI
 var _pixiJs = require("pixi.js");
 class Background extends _pixiJs.Sprite {
     constructor(texture, width, height){
         super(texture);
+        // Setting width & height
         this.width = width;
         this.height = height;
     }
