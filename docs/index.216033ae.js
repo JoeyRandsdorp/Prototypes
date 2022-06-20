@@ -529,6 +529,9 @@ var _testGround2Jpg = require("../../images/test_ground2.jpg");
 var _testGround2JpgDefault = parcelHelpers.interopDefault(_testGround2Jpg);
 var _blockJpg = require("../../images/block.jpg");
 var _blockJpgDefault = parcelHelpers.interopDefault(_blockJpg);
+// Import Sound
+var _themeWav = require("url:../../sound/theme.wav");
+var _themeWavDefault = parcelHelpers.interopDefault(_themeWav);
 // Import Classes
 var _testChar = require("./test_char");
 var _testGround = require("./test_ground");
@@ -538,6 +541,7 @@ class Game {
     // Globals
     pixiWidth = 800;
     pixiHeight = 450;
+    themeSound = new Audio(_themeWavDefault.default);
     constructor(){
         // Create PIXI Stage
         this.pixi = new _pixiJs.Application({
@@ -554,6 +558,12 @@ class Game {
         );
     }
     loadCompleted() {
+        // Play theme & loop theme
+        this.themeSound.play();
+        this.themeSound.addEventListener('ended', function() {
+            this.currentTime = 0;
+            this.play();
+        }, false);
         // Adding background to game
         this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixiWidth, this.pixiHeight);
         this.pixi.stage.addChild(this.background);
@@ -593,7 +603,7 @@ class Game {
 }
 new Game();
 
-},{"pixi.js":"dsYej","../../images/Char1_1.png":"bI3sK","../../images/test_background2.jpg":"a7lkD","../../images/test_ground2.jpg":"oNQ9A","../../images/block.jpg":"4sQHj","./test_char":"gp4to","./test_ground":"jEQJV","./test_block":"hjnnz","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./background":"l9Hyw"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","../../images/Char1_1.png":"bI3sK","../../images/test_background2.jpg":"a7lkD","../../images/test_ground2.jpg":"oNQ9A","../../images/block.jpg":"4sQHj","./test_char":"gp4to","./test_ground":"jEQJV","./test_block":"hjnnz","./background":"l9Hyw","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","url:../../sound/theme.wav":"i4hYF"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37299,7 +37309,7 @@ class Char extends _pixiJs.Sprite {
     }
 }
 
-},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","url:../../sound/jump.wav":"4UqO2","url:../../sound/death.wav":"k3q2K","url:../../sound/footstep.wav":"hPXJO","url:../../sound/push.wav":"ay0XO","url:../../sound/head_bump.wav":"lojoN"}],"4UqO2":[function(require,module,exports) {
+},{"pixi.js":"dsYej","url:../../sound/jump.wav":"4UqO2","url:../../sound/death.wav":"k3q2K","url:../../sound/footstep.wav":"hPXJO","url:../../sound/push.wav":"ay0XO","url:../../sound/head_bump.wav":"lojoN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4UqO2":[function(require,module,exports) {
 module.exports = require('./helpers/bundle-url').getBundleURL('lB9Xt') + "jump.142f6e7b.wav" + "?" + Date.now();
 
 },{"./helpers/bundle-url":"lgJ39"}],"k3q2K":[function(require,module,exports) {
@@ -37368,6 +37378,9 @@ class Background extends _pixiJs.Sprite {
     }
 }
 
-},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["eOEt8","4Iwcp"], "4Iwcp", "parcelRequirefac4")
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"i4hYF":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('lB9Xt') + "theme.08a57e11.wav" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}]},["eOEt8","4Iwcp"], "4Iwcp", "parcelRequirefac4")
 
 //# sourceMappingURL=index.216033ae.js.map
