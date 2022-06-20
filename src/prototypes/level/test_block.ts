@@ -8,7 +8,7 @@ export class Block extends PIXI.Sprite{
 
         // Setting the start position
         this.x = 350;
-        this.y = 278;
+        this.y = 150;
 
         // Setting the width & height
         this.width = 70;

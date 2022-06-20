@@ -1,6 +1,13 @@
 // Import PIXI
 import * as PIXI from 'pixi.js';
 
+// Import sounds
+import jumpSoundFile from 'url:../../sound/jump.wav';
+import deathSoundFile from 'url:../../sound/death.wav';
+import footstepSoundFile from 'url:../../sound/footstep.wav';
+import pushSoundFile from 'url:../../sound/push.wav';
+import headBumpSoundFile from 'url:../../sound/head_bump.wav';
+
 export class Char extends PIXI.Sprite {
     // Globals
     public xspeed = 0;
@@ -10,6 +17,13 @@ export class Char extends PIXI.Sprite {
     private walkLeft = false;
     private walkLeftLock = false;
     private walkRightLock = false;
+    
+    // Sounds
+    private jumpSound: HTMLAudioElement = new Audio(jumpSoundFile);
+    private deathSound: HTMLAudioElement = new Audio(deathSoundFile);
+    private footstepSound: HTMLAudioElement = new Audio(footstepSoundFile);
+    private pushSound: HTMLAudioElement = new Audio(pushSoundFile);
+    private headBumpSound: HTMLAudioElement = new Audio(headBumpSoundFile);
 
     constructor(texture: PIXI.Texture){
         super(texture);
@@ -22,7 +36,7 @@ export class Char extends PIXI.Sprite {
         // Setting width & height
         this.width = 51;
         this.height = 72;
-
+        
         // Adding event listeners for keyboard
         window.addEventListener("keydown", (e: KeyboardEvent) => this.onKeyDown(e));
         window.addEventListener("keyup", (e: KeyboardEvent) => this.onKeyUp(e));
@@ -38,6 +52,7 @@ export class Char extends PIXI.Sprite {
 
         // Fall offscreen
         if(this.y > 500){
+            this.deathSound.play();
             this.resetPosition();
         }
 
@@ -75,6 +90,7 @@ export class Char extends PIXI.Sprite {
             if(this.x + this.width > object.x && this.x < object.x + object.width){
                 // If both statements are true, the player will fall down
                 this.yspeed = 3;
+                this.headBumpSound.play();
             }
         }
     }
@@ -89,6 +105,7 @@ export class Char extends PIXI.Sprite {
                 this.walkRightLock = true;
                 this.walkRight = false;
                 this.x = object.x - this.width - 1;
+                this.pushSound.play();
             }
         } else {
             // Else the lock of walking right is false, so the player can walk to the right
@@ -104,6 +121,7 @@ export class Char extends PIXI.Sprite {
                 this.walkLeftLock = true;
                 this.walkLeft = false;
                 this.x = object.x + object.width + 1;
+                this.pushSound.play();
             }
         } else {
             // Else the lock of walking left is false, so the player can walk to the left
@@ -123,6 +141,7 @@ export class Char extends PIXI.Sprite {
                 // The player jumps if the character stands on an object...
                 // AND if space, arrow up or W is pressed
                 this.yspeed = -9;
+                this.jumpSound.play();
             }
         }
         switch (e.key.toUpperCase()) {
@@ -131,7 +150,8 @@ export class Char extends PIXI.Sprite {
                 if(!this.walkLeftLock){
                     // The player walks to the left if the walk left lock is false...
                     // AND the arrow left or A is pressed
-                    this.walkLeft = true
+                    this.walkLeft = true;
+                    this.footstepSound.play();
                 }
                 break;
             case "D":
@@ -139,7 +159,8 @@ export class Char extends PIXI.Sprite {
                 if(!this.walkRightLock){
                     // The player walks to the right if the walk rigth lock is false...
                     // AND the arrow right or D is pressed
-                    this.walkRight = true
+                    this.walkRight = true;
+                    this.footstepSound.play();
                 }
                 break;
         }

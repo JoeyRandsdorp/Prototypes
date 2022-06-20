@@ -1,13 +1,16 @@
 // Import PIXI
 import * as PIXI from 'pixi.js';
 
-// Import images
+// Import Images
 import testChar from '../../images/Char1_1.png';
 import testBack from '../../images/test_background2.jpg';
 import testGround from '../../images/test_ground2.jpg';
 import testBlock from '../../images/block.jpg';
 
-// Import classes
+// Import Sound
+import themeSoundFile from 'url:../../sound/theme.wav';
+
+// Import Classes
 import { Char } from './test_char';
 import { Ground } from './test_ground';
 import { Block } from './test_block';
@@ -25,6 +28,8 @@ export class Game{
     private ground : Ground;
     private block : Block;
     private background : Background;
+
+    private themeSound: HTMLAudioElement = new Audio(themeSoundFile);
 
     constructor(){
         // Create PIXI Stage
@@ -44,6 +49,13 @@ export class Game{
     }
 
     private loadCompleted(){
+        // Play theme & loop theme
+        this.themeSound.play();
+        this.themeSound.addEventListener('ended', function(){
+            this.currentTime = 0;
+            this.play();
+        }, false);
+
         // Adding background to game
         this.background = new Background(this.loader.resources["backgroundTexture"].texture!, this.pixiWidth, this.pixiHeight);
         this.pixi.stage.addChild(this.background);
