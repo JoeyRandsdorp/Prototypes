@@ -51,7 +51,7 @@ export class Char extends PIXI.Sprite {
         for(let i = 0; i < this.allBlocksArray.length; i++){
             this.allBlocksArray[i].x += -delta * this.xspeed;
         }
-        // this.x += delta * this.xspeed;
+        
         this.y += delta * this.yspeed;
 
         // player gravity

@@ -37225,7 +37225,6 @@ class Char extends _pixiJs.Sprite {
     update(delta) {
         // player movement & speed
         for(let i = 0; i < this.allBlocksArray.length; i++)this.allBlocksArray[i].x += -delta * this.xspeed;
-        // this.x += delta * this.xspeed;
         this.y += delta * this.yspeed;
         // player gravity
         this.yspeed += this.weigth;
