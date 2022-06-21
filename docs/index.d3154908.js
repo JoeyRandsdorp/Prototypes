@@ -554,6 +554,7 @@ class Game {
         // Arrays
         this.blocks = [];
         this.grounds = [];
+        this.gameArray = [];
         // Create Loader
         this.loader = new _pixiJs.Loader();
         this.loader.add('charTexture', _char11PngDefault.default).add('backgroundTexture', _testBackground2JpgDefault.default).add('groundTexture', _testGround2JpgDefault.default).add('blockTexture', _blockJpgDefault.default);
@@ -571,7 +572,7 @@ class Game {
         this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixiWidth, this.pixiHeight);
         this.pixi.stage.addChild(this.background);
         // Adding player to game
-        this.char = new _testChar.Char(this.loader.resources["charTexture"].texture);
+        this.char = new _testChar.Char(this.loader.resources["charTexture"].texture, this.gameArray);
         this.pixi.stage.addChild(this.char);
         // Adding grounds to game
         this.createGround(20, 350);
@@ -579,6 +580,7 @@ class Game {
         // Adding blocks to game
         this.createBlock(350, 150);
         this.createBlock(600, 278);
+        this.createBlock(1200, 278);
         // Update
         this.pixi.ticker.add((delta)=>this.update(delta)
         );
@@ -610,6 +612,7 @@ class Game {
         block.x = x;
         block.y = y;
         this.blocks.push(block);
+        this.gameArray.push(block);
         this.pixi.stage.addChild(block);
     }
     createGround(x, y) {
@@ -617,12 +620,13 @@ class Game {
         ground.x = x;
         ground.y = y;
         this.grounds.push(ground);
+        this.gameArray.push(ground);
         this.pixi.stage.addChild(ground);
     }
 }
 new Game();
 
-},{"pixi.js":"dsYej","../../images/Char1_1.png":"bz8rV","../../images/test_background2.jpg":"8IGkq","../../images/test_ground2.jpg":"gCWNu","../../images/block.jpg":"8NtSR","url:../../sound/theme.wav":"b7ieq","./test_char":"kjm2v","./background":"6qls3","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./test_block":"5SjHh","./test_ground":"9zqe2"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","../../images/Char1_1.png":"bz8rV","../../images/test_background2.jpg":"8IGkq","../../images/test_ground2.jpg":"gCWNu","../../images/block.jpg":"8NtSR","url:../../sound/theme.wav":"b7ieq","./test_char":"kjm2v","./test_ground":"9zqe2","./test_block":"5SjHh","./background":"6qls3","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37201,7 +37205,7 @@ class Char extends _pixiJs.Sprite {
     footstepSound = new Audio(_footstepWavDefault.default);
     pushSound = new Audio(_pushWavDefault.default);
     headBumpSound = new Audio(_headBumpWavDefault.default);
-    constructor(texture){
+    constructor(texture, allBlocks){
         super(texture);
         this.anchor.set(0);
         // Setting start position
@@ -37210,6 +37214,8 @@ class Char extends _pixiJs.Sprite {
         // Setting width & height
         this.width = 51;
         this.height = 72;
+        // Blocks array
+        this.allBlocksArray = allBlocks;
         // Adding event listeners for keyboard
         window.addEventListener("keydown", (e)=>this.onKeyDown(e)
         );
@@ -37218,7 +37224,8 @@ class Char extends _pixiJs.Sprite {
     }
     update(delta) {
         // player movement & speed
-        this.x += delta * this.xspeed;
+        for(let i = 0; i < this.allBlocksArray.length; i++)this.allBlocksArray[i].x += -delta * this.xspeed;
+        // this.x += delta * this.xspeed;
         this.y += delta * this.yspeed;
         // player gravity
         this.yspeed += this.weigth;
@@ -37346,19 +37353,22 @@ module.exports = require('./helpers/bundle-url').getBundleURL('jbeVh') + "push.9
 },{"./helpers/bundle-url":"lgJ39"}],"kiuqQ":[function(require,module,exports) {
 module.exports = require('./helpers/bundle-url').getBundleURL('jbeVh') + "head_bump.32f9c79e.wav" + "?" + Date.now();
 
-},{"./helpers/bundle-url":"lgJ39"}],"6qls3":[function(require,module,exports) {
+},{"./helpers/bundle-url":"lgJ39"}],"9zqe2":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Background", ()=>Background
+parcelHelpers.export(exports, "Ground", ()=>Ground
 );
 // Import PIXI
 var _pixiJs = require("pixi.js");
-class Background extends _pixiJs.Sprite {
-    constructor(texture, width, height){
+class Ground extends _pixiJs.Sprite {
+    constructor(texture){
         super(texture);
-        // Setting width & height
-        this.width = width;
-        this.height = height;
+        // Setting the start position
+        this.x = 0;
+        this.y = 350;
+        // Setting the width & height
+        this.width = 500;
+        this.height = 70;
     }
 }
 
@@ -37381,22 +37391,19 @@ class Block extends _pixiJs.Sprite {
     }
 }
 
-},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9zqe2":[function(require,module,exports) {
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6qls3":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Ground", ()=>Ground
+parcelHelpers.export(exports, "Background", ()=>Background
 );
 // Import PIXI
 var _pixiJs = require("pixi.js");
-class Ground extends _pixiJs.Sprite {
-    constructor(texture){
+class Background extends _pixiJs.Sprite {
+    constructor(texture, width, height){
         super(texture);
-        // Setting the start position
-        this.x = 0;
-        this.y = 350;
-        // Setting the width & height
-        this.width = 500;
-        this.height = 70;
+        // Setting width & height
+        this.width = width;
+        this.height = height;
     }
 }
 
