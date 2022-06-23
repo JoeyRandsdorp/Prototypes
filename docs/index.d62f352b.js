@@ -520,6 +520,8 @@ parcelHelpers.export(exports, "Game", ()=>Game
 );
 // Import PIXI
 var _pixiJs = require("pixi.js");
+// Import Controller controls
+var _arcade = require("./arcade/arcade");
 // Import Images
 var _char11Png = require("../../images/Char1_1.png");
 var _char11PngDefault = parcelHelpers.interopDefault(_char11Png);
@@ -551,13 +553,22 @@ class Game {
         this.pixi.stage.interactive = true;
         this.pixi.stage.hitArea = this.pixi.renderer.screen;
         document.body.appendChild(this.pixi.view);
+        // Create arcade cabinet with 2 joysticks (with 6 buttons)
+        this.arcade = new _arcade.Arcade(this);
         // Create Loader
         this.loader = new _pixiJs.Loader();
         this.loader.add('charTexture', _char11PngDefault.default).add('backgroundTexture', _testBackground2JpgDefault.default).add('groundTexture', _testGround2JpgDefault.default).add('blockTexture', _blockJpgDefault.default);
-        this.loader.load(()=>this.loadCompleted()
-        );
+        // The game must wait for de joysticks to connect
+        console.log("waiting for joysticks to connect");
+        this.joystickListener = (e)=>this.loadCompleted(e)
+        ;
+        document.addEventListener("joystickcreated", this.joystickListener);
     }
-    loadCompleted() {
+    loadCompleted(e) {
+        let joystick = this.arcade.Joysticks[e.detail];
+        // debug, this shows you the names of the buttons when they are pressed
+        for (const buttonEvent of joystick.ButtonEvents)document.addEventListener(buttonEvent, ()=>console.log(buttonEvent)
+        );
         // Play theme & loop theme
         this.themeSound.play();
         this.themeSound.addEventListener('ended', function() {
@@ -567,20 +578,22 @@ class Game {
         // Adding background to game
         this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixiWidth, this.pixiHeight);
         this.pixi.stage.addChild(this.background);
+        // Adding player to game
+        this.char = new _testChar.Char(this.loader.resources["charTexture"].texture, joystick);
+        this.pixi.stage.addChild(this.char);
         // Adding ground to game
         this.ground = new _testGround.Ground(this.loader.resources["groundTexture"].texture);
         this.pixi.stage.addChild(this.ground);
         // Adding block to game
         this.block = new _testBlock.Block(this.loader.resources["blockTexture"].texture);
         this.pixi.stage.addChild(this.block);
-        // Adding player to game
-        this.char = new _testChar.Char(this.loader.resources["charTexture"].texture);
-        this.pixi.stage.addChild(this.char);
         // Update
         this.pixi.ticker.add((delta)=>this.update(delta)
         );
     }
     update(delta) {
+        // Update controller
+        for (let joystick of this.arcade.Joysticks)joystick.update();
         // Update player
         this.char.update(delta);
         // Vertical collision player with ground
@@ -600,10 +613,13 @@ class Game {
         this.char.collisionVerticalBottom(this.block);
         this.char.collisionVerticalBottom(this.ground);
     }
+    disconnect() {
+        document.removeEventListener("joystickcreated", this.joystickListener);
+    }
 }
 new Game();
 
-},{"pixi.js":"dsYej","../../images/Char1_1.png":"kZlby","../../images/test_background2.jpg":"l6BEe","../../images/test_ground2.jpg":"8XJIH","../../images/block.jpg":"3Jmwc","url:../../sound/theme.wav":"cYXYN","./test_char":"9IVFH","./test_ground":"gKh85","./test_block":"1CM6K","./background":"hFaDD","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","./arcade/arcade":"fiYVo","../../images/Char1_1.png":"kZlby","../../images/test_background2.jpg":"l6BEe","../../images/test_ground2.jpg":"8XJIH","../../images/block.jpg":"3Jmwc","url:../../sound/theme.wav":"cYXYN","./test_char":"9IVFH","./test_ground":"gKh85","./test_block":"1CM6K","./background":"hFaDD","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37100,7 +37116,402 @@ function __extends(d, b) {
     return AnimatedSprite1;
 }(_sprite.Sprite);
 
-},{"@pixi/core":"7PEF8","@pixi/sprite":"9mbxh","@pixi/ticker":"8ekG7","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kZlby":[function(require,module,exports) {
+},{"@pixi/core":"7PEF8","@pixi/sprite":"9mbxh","@pixi/ticker":"8ekG7","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fiYVo":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Arcade", ()=>Arcade
+);
+var _joystick = require("./joystick");
+class Arcade {
+    REDIRECT_URL = "http://hr-cmgt.github.io/arcade-server";
+    multiplayer = false;
+    // PROPERTIES
+    get Joysticks() {
+        return this.joysticks;
+    }
+    /**
+     * Creates an arcade 'cabinet' 
+     * @param mp 'true' for 2 joystick multiplayer Arcade (default single player)
+     */ constructor(game, mp = false, debug = false){
+        this.game = game;
+        this.multiplayer = mp;
+        this.DEBUG = debug;
+        this.joysticks = [];
+        if (this.DEBUG) this.showStatus("Gamepad is NOT connected. Press a button to connect");
+        document.addEventListener("redirect", ()=>this.onRedirect()
+        );
+        window.addEventListener("gamepadconnected", (e)=>this.onGamePadConnected(e)
+        );
+        window.addEventListener("gamepaddisconnected", (e)=>this.onGamePadDisconnected(e)
+        );
+    }
+    /**
+     * Handles redirect fired from joystick
+     */ onRedirect() {
+        if (this.DEBUG) console.log('redirect!!');
+        window.location.href = this.REDIRECT_URL;
+    }
+    /**
+     * Handles connecting a joystick
+     * @param e Gamepad event
+     */ onGamePadConnected(e) {
+        if (this.DEBUG) {
+            console.log('Game pad connected');
+            console.log("Joystick number: " + e.gamepad.index);
+        }
+        if (!this.multiplayer && this.joysticks.length == 0 || this.multiplayer) {
+            let joystick = this.createAndAddJoystick(e.gamepad.index, 6);
+            joystick.PreviousGamepad = joystick.Gamepad;
+            joystick.Gamepad = e.gamepad;
+            if (joystick.PreviousGamepad == null) joystick.PreviousGamepad = e.gamepad;
+        }
+        if (this.DEBUG) this.removeStatus();
+    }
+    /**
+     * Handles disconnecting a joystick
+     * @param e Gamepad event
+     */ onGamePadDisconnected(e) {
+        if (this.DEBUG) console.log('Game pad disconnected');
+        if (this.DEBUG) this.showStatus("Gamepad is NOT connected. Connect the gamepad and press a button.");
+        this.removeJoystick(e.gamepad.index);
+        this.game.disconnect();
+    }
+    /**
+     * Creates an Joystick and adds it to this arcade
+     * @param joystickNumber Unique identifier given by the joystick
+     * @param numOfButtons Sets number of buttons on joystick
+     */ createAndAddJoystick(joystickNumber, numOfButtons) {
+        let joystickCheck = this.getJoystickByNumber(joystickNumber);
+        if (joystickCheck != null) return joystickCheck;
+        let joystickNew = new _joystick.Joystick(joystickNumber, numOfButtons, this.DEBUG);
+        this.joysticks[joystickNumber] = joystickNew;
+        if (joystickNew) {
+            document.dispatchEvent(new CustomEvent("joystickcreated", {
+                detail: joystickNumber
+            }));
+            console.log("joystick created");
+        }
+        return joystickNew;
+    }
+    /**
+     * Removes a Joystick from this arcade
+     * @param joystickNumber Unique identifier of the joystick
+     */ removeJoystick(joystickNumber) {
+        let joystickCheck = this.getJoystickByNumber(joystickNumber);
+        if (joystickCheck == null) return;
+        var index = this.joysticks.indexOf(joystickCheck);
+        this.joysticks[index].destroy();
+        if (index > -1) this.joysticks.splice(index, 1);
+    }
+    /**
+     * Get a Joystick with its unique identifier
+     * @param joystickNumber Unique identifier given by the joystick
+     */ getJoystickByNumber(joystickNumber) {
+        for (let joystick of this.joysticks){
+            if (joystick.JoystickNumber == joystickNumber) return joystick;
+        }
+        return null;
+    }
+    showStatus(content) {
+        let container;
+        let p;
+        if (!(container = document.getElementsByTagName("status")[0])) {
+            container = document.createElement("status");
+            document.body.append(container);
+        }
+        if (container) {
+            if (!(p = container.getElementsByTagName("p")[0])) {
+                p = document.createElement("p");
+                container.appendChild(p);
+            }
+        }
+        if (p) p.innerHTML = content;
+    }
+    removeStatus() {
+        let status;
+        if (status = document.getElementsByTagName("status")[0]) status.remove();
+    }
+}
+
+},{"./joystick":"616P8","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"616P8":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Joystick", ()=>Joystick
+);
+var _debugpanel = require("./debugpanel");
+class Joystick {
+    DEBUG = true;
+    // BUT1 and BUT2 are the indexes of the redirect function. 
+    // When both are pressed, redirect to homepage
+    BUT1 = 8;
+    BUT2 = 9;
+    // FIELDS
+    joystickNumber = 0;
+    numberOfBUttons = 0;
+    buttonEvents = [];
+    axes = [];
+    // PROPERTIES
+    // Axes as booleans
+    get Left() {
+        return this.axes[0] == -1;
+    }
+    get Right() {
+        return this.axes[0] == 1;
+    }
+    get Up() {
+        return this.axes[1] == -1;
+    }
+    get Down() {
+        return this.axes[1] == 1;
+    }
+    get Neutral() {
+        return this.axes[0] == 0 && this.axes[1] == 0;
+    }
+    // Axes as direction
+    // values are -1, 0, 1 because arcade sticks are digital
+    get Y() {
+        return Math.round(this.axes[1]);
+    }
+    get X() {
+        return Math.round(this.axes[0]);
+    }
+    // Joystick identifier
+    get JoystickNumber() {
+        return this.joystickNumber;
+    }
+    get ButtonEvents() {
+        return this.buttonEvents;
+    }
+    // Current gamepad
+    get Gamepad() {
+        return this.gamepad;
+    }
+    set Gamepad(gamepad) {
+        this.gamepad = gamepad;
+    }
+    // previous gamepad
+    get PreviousGamepad() {
+        return this.previousGamepad;
+    }
+    set PreviousGamepad(previousGamepad) {
+        this.previousGamepad = previousGamepad;
+    }
+    /**
+     * Creates a joystick object for one player
+     * @param joystickNumber The number of the first joystick (starts at 0)
+     * @param numOfButtons The number of buttons needed by your game
+     * @param debug true for in browser gamepad info
+     */ constructor(joystickNumber, numOfButtons, debug){
+        this.joystickNumber = joystickNumber;
+        this.numberOfBUttons = numOfButtons;
+        this.DEBUG = debug;
+        for(let i = 0; i < this.numberOfBUttons; i++)this.buttonEvents.push('joystick' + this.JoystickNumber + 'button' + i);
+        if (this.DEBUG) this.debugPanel = new _debugpanel.DebugPanel(this, this.numberOfBUttons);
+    }
+    update() {
+        let gamepad = navigator.getGamepads()[this.gamepad.index];
+        if (gamepad) this.readGamepad(gamepad);
+    }
+    readGamepad(gamepad) {
+        for(let index = 0; index < this.numberOfBUttons; index++){
+            if (this.buttonPressed(gamepad.buttons[index]) && !this.buttonPressed(this.previousGamepad.buttons[index])) document.dispatchEvent(new Event(this.buttonEvents[index]));
+            if (this.buttonPressed(gamepad.buttons[this.BUT1]) && this.buttonPressed(gamepad.buttons[this.BUT2]) && (!this.buttonPressed(this.previousGamepad.buttons[this.BUT1]) || !this.buttonPressed(this.previousGamepad.buttons[this.BUT2]))) document.dispatchEvent(new Event('redirect'));
+        }
+        // gamepad has 4 axes, first is x, second is y
+        // an axe returns a float, only int is needed
+        this.axes[0] = Math.round(gamepad.axes[0]);
+        this.axes[1] = Math.round(gamepad.axes[1]);
+        if (this.DEBUG) {
+            // update the axes (x and y)
+            this.debugPanel.Axes[0] = this.axes[0];
+            this.debugPanel.Axes[1] = this.axes[1];
+            this.debugPanel.update();
+        }
+        this.previousGamepad = gamepad;
+    }
+    /**
+     * Helper function to filter some bad input
+     * @param b 
+     */ buttonPressed(b) {
+        if (typeof b == "object") return b.pressed;
+        return b == 1;
+    }
+    destroy() {
+        if (this.DEBUG) this.debugPanel.remove();
+    }
+}
+
+},{"./debugpanel":"dP5nb","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dP5nb":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+//#endregion
+parcelHelpers.export(exports, "DebugPanel", ()=>DebugPanel
+);
+//#region Template
+const template = document.createElement('template');
+template.innerHTML = `
+<style>
+:host {
+    position:           absolute;
+    top:                10px;
+    right:              10px;
+}
+root {
+    top:                10px;
+    right:              10px;
+    width:              289px; 
+    height:             120px;
+    display:            block;
+    background-color:   #75a8f77a;
+}
+root * {
+    position:           relative;
+}
+.button-wrapper, .axes-wrapper {
+    display:            flex;
+    flex-wrap:          wrap;
+    float:              left;
+}
+root .button-div {
+    border: solid 1px black;
+    width:              60px;
+    margin:             5px;
+    padding:            5px;
+}
+.button-wrapper {
+    width:              164px;
+}
+.axes-wrapper {
+    width:              115px;
+    margin:             5px;
+}
+.axes-cell {
+    width:              25px;  
+    height:             25px; 
+    margin:             5px;  
+    border:             solid 1px transparent;
+}
+.axes-cell.direction {
+    border:             solid 1px black;
+}
+.axes-cell.center{
+    border:             solid 1px black;
+    background-color:   blue;
+}
+.axes-cell.active{
+    background-color:   red;
+}
+.identifier{
+    position:           absolute;
+    top:                5px;
+    left:               5px;
+    width:              auto;
+    font-weight:        bold;
+    color:              #fff;
+}
+</style>`;
+class DebugPanel extends HTMLElement {
+    panelHeight = 120;
+    panelSpacing = 10;
+    buttonDivs = [];
+    Axes = [];
+    constructor(joystick, numOfButtons){
+        super();
+        this.joystick = joystick;
+        this.numberOfButtons = numOfButtons;
+        let spaceFromTop = this.panelSpacing + this.joystick.JoystickNumber * (this.panelHeight + this.panelSpacing);
+        this.style.top = spaceFromTop + "px";
+        this.rootElement = document.createElement('root');
+        this.rootElement.style.height = this.panelHeight + "px";
+        template.appendChild(this.rootElement);
+        // identifier
+        let identifier = document.createElement("div");
+        identifier.classList.add('identifier');
+        identifier.innerHTML = "#" + this.joystick.JoystickNumber;
+        this.rootElement.appendChild(identifier);
+        // axes
+        this.createHTMLForAxes();
+        // this.buttons = buttons
+        this.createHTMLForButtons();
+        this.createListenersForButtons();
+        this.attachShadow({
+            mode: 'open'
+        });
+        if (this.shadowRoot) {
+            let temp = template.content.cloneNode(true);
+            temp.appendChild(this.rootElement);
+            this.shadowRoot.appendChild(temp);
+        }
+        document.body.appendChild(this);
+    }
+    createListenersForButtons() {
+        for(let i = 0; i < this.numberOfButtons; i++)document.addEventListener(this.joystick.ButtonEvents[i], (e)=>this.handleButtonClicks(e, i)
+        );
+    }
+    handleButtonClicks(event, index) {
+        this.buttonDivs[index].style.filter = 'hue-rotate(' + Math.random() * 360 + 'deg)';
+    }
+    createHTMLForButtons() {
+        let buttonWrapper = document.createElement("div");
+        buttonWrapper.className = "button-wrapper";
+        for(let index = 0; index < this.numberOfButtons; index++){
+            let buttonDiv = document.createElement("div");
+            buttonDiv.className = "button-div";
+            buttonWrapper.appendChild(buttonDiv);
+            buttonDiv.style.backgroundColor = "blue";
+            buttonDiv.innerHTML = "Button " + (index + 1);
+            this.buttonDivs.push(buttonDiv);
+        }
+        this.rootElement.appendChild(buttonWrapper);
+    }
+    createHTMLForAxes() {
+        let axesWrapper = document.createElement("div");
+        axesWrapper.className = "axes-wrapper";
+        for(let i = 1; i <= 9; i++){
+            let cell = document.createElement('div');
+            cell.className = "axes-cell";
+            if (i % 2 == 0) cell.classList.add("direction");
+            if (i == 5) cell.classList.add("center");
+            axesWrapper.appendChild(cell);
+            switch(i){
+                case 2:
+                    this.up = cell;
+                    break;
+                case 4:
+                    this.left = cell;
+                    break;
+                case 6:
+                    this.right = cell;
+                    break;
+                case 8:
+                    this.down = cell;
+                    break;
+            }
+        }
+        this.rootElement.appendChild(axesWrapper);
+    }
+    update() {
+        // X-axe
+        if (this.Axes[0] == 0) {
+            this.left.classList.remove("active");
+            this.right.classList.remove("active");
+        } else {
+            if (this.Axes[0] < 0) this.left.classList.add("active");
+            else if (this.Axes[0] > 0) this.right.classList.add("active");
+        }
+        // Y-axe
+        if (this.Axes[1] == 0) {
+            this.up.classList.remove("active");
+            this.down.classList.remove("active");
+        } else {
+            if (this.Axes[1] < 0) this.up.classList.add("active");
+            else if (this.Axes[1] > 0) this.down.classList.add("active");
+        }
+    }
+}
+window.customElements.define("debug-panel", DebugPanel);
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kZlby":[function(require,module,exports) {
 module.exports = require('./helpers/bundle-url').getBundleURL('gSGRc') + "Char1_1.9c17b06b.png" + "?" + Date.now();
 
 },{"./helpers/bundle-url":"lgJ39"}],"lgJ39":[function(require,module,exports) {
@@ -37182,7 +37593,7 @@ class Char extends _pixiJs.Sprite {
     footstepSound = new Audio(_footstepWavDefault.default);
     pushSound = new Audio(_pushWavDefault.default);
     headBumpSound = new Audio(_headBumpWavDefault.default);
-    constructor(texture){
+    constructor(texture, joystick){
         super(texture);
         this.anchor.set(0);
         // Setting start position
@@ -37191,15 +37602,13 @@ class Char extends _pixiJs.Sprite {
         // Setting width & height
         this.width = 51;
         this.height = 72;
-        // Adding event listeners for keyboard
-        window.addEventListener("keydown", (e)=>this.onKeyDown(e)
-        );
-        window.addEventListener("keyup", (e)=>this.onKeyUp(e)
+        this.joystick = joystick;
+        document.addEventListener(this.joystick.ButtonEvents[0], ()=>this.jump()
         );
     }
     update(delta) {
         // player movement & speed
-        this.x += delta * this.xspeed;
+        this.x += this.joystick.X;
         this.y += delta * this.yspeed;
         // player gravity
         this.yspeed += this.weigth;
@@ -37261,54 +37670,14 @@ class Char extends _pixiJs.Sprite {
         } else // Else the lock of walking left is false, so the player can walk to the left
         this.walkLeftLock = false;
     }
+    jump() {
+        this.yspeed = -9;
+        this.jumpSound.play();
+    }
     resetPosition() {
         // The respawn position of the player
         this.x = 80;
         this.y = 60;
-    }
-    onKeyDown(e) {
-        if (e.key === " " || e.key === "ArrowUp" || e.key === "w") {
-            if (this.yspeed === 0) {
-                // The player jumps if the character stands on an object...
-                // AND if space, arrow up or W is pressed
-                this.yspeed = -9;
-                this.jumpSound.play();
-            }
-        }
-        switch(e.key.toUpperCase()){
-            case "A":
-            case "ARROWLEFT":
-                if (!this.walkLeftLock) {
-                    // The player walks to the left if the walk left lock is false...
-                    // AND the arrow left or A is pressed
-                    this.walkLeft = true;
-                    this.footstepSound.play();
-                }
-                break;
-            case "D":
-            case "ARROWRIGHT":
-                if (!this.walkRightLock) {
-                    // The player walks to the right if the walk rigth lock is false...
-                    // AND the arrow right or D is pressed
-                    this.walkRight = true;
-                    this.footstepSound.play();
-                }
-                break;
-        }
-    }
-    onKeyUp(e) {
-        switch(e.key.toUpperCase()){
-            case "A":
-            case "ARROWLEFT":
-                // The player stops walking to the left if arrow left or A is no longer pressed
-                this.walkLeft = false;
-                break;
-            case "D":
-            case "ARROWRIGHT":
-                // The player stops walking to the right if arrow right or D is no longer pressed
-                this.walkRight = false;
-                break;
-        }
     }
 }
 
