@@ -9,6 +9,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@maulingmonkey/gamepad": "^0.0.5",
         "pixi.js": "^6.3.0"
     },
     "devDependencies": {
