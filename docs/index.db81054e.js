@@ -523,9 +523,17 @@ var _pixiJs = require("pixi.js");
 // Import controller controls
 var _arcade = require("./arcade/arcade");
 // Import classes
-var _box = require("./box");
+var _player = require("./player");
+var _testGround = require("./test_ground");
+var _background = require("./background");
+// Import Images
+var _char11Png = require("../../images/Char1_1.png");
+var _char11PngDefault = parcelHelpers.interopDefault(_char11Png);
+var _testBackground2Jpg = require("../../images/test_background2.jpg");
+var _testBackground2JpgDefault = parcelHelpers.interopDefault(_testBackground2Jpg);
+var _testGround2Jpg = require("../../images/test_ground2.jpg");
+var _testGround2JpgDefault = parcelHelpers.interopDefault(_testGround2Jpg);
 class Game {
-    // Globals
     pixiWidth = 800;
     pixiHeight = 450;
     constructor(){
@@ -538,7 +546,11 @@ class Game {
         document.body.appendChild(this.pixi.view);
         // create arcade cabinet with 2 joysticks (with 6 buttons)
         this.arcade = new _arcade.Arcade(this);
-        // // The game must wait for de joysticks to connect
+        // Create Loader
+        this.loader = new _pixiJs.Loader();
+        this.loader.add("playerTexture", _char11PngDefault.default).add("backgroundTexture", _testBackground2JpgDefault.default).add("groundTexture", _testGround2JpgDefault.default);
+        this.loader.load();
+        //The game must wait for de joysticks to connect
         console.log("waiting for joysticks to connect");
         this.joystickListener = (e)=>this.joyStickFound(e)
         ;
@@ -549,16 +561,27 @@ class Game {
         // debug, this shows you the names of the buttons when they are pressed
         for (const buttonEvent of joystick.ButtonEvents)document.addEventListener(buttonEvent, ()=>console.log(buttonEvent)
         );
-        // pass to a player class
-        this.box = new _box.Box(joystick);
-        this.pixi.stage.addChild(this.box);
+        // Create background
+        this.background = new _background.Background(this.loader.resources["backgroundTexture"].texture, this.pixiWidth, this.pixiHeight);
+        this.pixi.stage.addChild(this.background);
+        // Create ground
+        this.ground = new _testGround.Ground(this.loader.resources["groundTexture"].texture);
+        this.pixi.stage.addChild(this.ground);
+        // Create Player
+        this.player = new _player.Player(this.loader.resources["playerTexture"].texture, joystick);
+        this.pixi.stage.addChild(this.player);
         // start pixi
         this.pixi.ticker.add((delta)=>this.update()
         );
     }
     update() {
         for (let joystick of this.arcade.Joysticks)joystick.update();
-        this.box.update();
+        this.player.update();
+        // Vertical collision player with ground
+        if (this.player.collisionVerticalTop(this.ground) && this.player.y + this.player.height < this.ground.y + this.player.yspeed) {
+            this.player.y = this.ground.y - this.player.height;
+            this.player.yspeed = 0;
+        }
     }
     disconnect() {
         document.removeEventListener("joystickcreated", this.joystickListener);
@@ -566,7 +589,7 @@ class Game {
 }
 new Game();
 
-},{"pixi.js":"dsYej","./arcade/arcade":"hDkBS","./box":"RZQEK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsYej":[function(require,module,exports) {
+},{"pixi.js":"dsYej","./arcade/arcade":"hDkBS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./player":"8PYJ6","../../images/Char1_1.png":"kJjwL","../../images/test_background2.jpg":"hIcSM","../../images/test_ground2.jpg":"7rId4","./background":"2xfhv","./test_ground":"kaOba"}],"dsYej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "utils", ()=>_utils
@@ -37458,31 +37481,131 @@ class DebugPanel extends HTMLElement {
 }
 window.customElements.define("debug-panel", DebugPanel);
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"RZQEK":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8PYJ6":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Box", ()=>Box
+parcelHelpers.export(exports, "Player", ()=>Player
 );
+// Import PIXI
 var _pixiJs = require("pixi.js");
-class Box extends _pixiJs.Sprite {
-    constructor(joystick){
-        super(_pixiJs.Texture.WHITE);
-        this.width = 30;
-        this.height = 30;
-        this.x = 100;
-        this.y = 100;
-        this.anchor.set(0.5);
+class Player extends _pixiJs.Sprite {
+    xspeed = 5;
+    yspeed = 3;
+    weigth = 0.3;
+    constructor(texture, joystick){
+        super(texture);
+        // Setting width & height
+        this.width = 51;
+        this.height = 72;
+        // Setting start position
+        this.x = 80;
+        this.y = 60;
+        // Adding event listeners for controller
         this.joystick = joystick;
-        document.addEventListener(this.joystick.ButtonEvents[0], ()=>this.changeColor()
+        document.addEventListener(this.joystick.ButtonEvents[0], ()=>this.jump()
         );
     }
-    changeColor() {
-        console.log("controller button pressed");
-        this.tint = Math.random() * 16777215;
+    jump() {
+        if (this.yspeed === 0) // Jump
+        this.yspeed = -9;
     }
     update() {
-        this.x += this.joystick.X;
-        this.y += this.joystick.Y;
+        // player movement & speed
+        this.x += this.joystick.X * this.xspeed;
+        this.y += this.yspeed;
+        // player gravity
+        this.yspeed += this.weigth;
+        // Fall offscreen
+        if (this.y > 500) this.resetPosition();
+    }
+    resetPosition() {
+        // The respawn position of the player
+        this.x = 80;
+        this.y = 60;
+    }
+    collisionVerticalTop(object) {
+        if (this.x > object.x + object.width || this.x + this.width < object.x || this.y > object.y + object.height || this.y + this.height < object.y) // Return false if the player doesn't stand on/in the object
+        return false;
+        else // Return true if the player stands on/in the object
+        return true;
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kJjwL":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('eWMPo') + "Char1_1.9c17b06b.png" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"lgJ39":[function(require,module,exports) {
+"use strict";
+var bundleURL = {};
+function getBundleURLCached(id) {
+    var value = bundleURL[id];
+    if (!value) {
+        value = getBundleURL();
+        bundleURL[id] = value;
+    }
+    return value;
+}
+function getBundleURL() {
+    try {
+        throw new Error();
+    } catch (err) {
+        var matches = ('' + err.stack).match(/(https?|file|ftp):\/\/[^)\n]+/g);
+        if (matches) // The first two stack frames will be this function and getBundleURLCached.
+        // Use the 3rd one, which will be a runtime in the original bundle.
+        return getBaseURL(matches[2]);
+    }
+    return '/';
+}
+function getBaseURL(url) {
+    return ('' + url).replace(/^((?:https?|file|ftp):\/\/.+)\/[^/]+$/, '$1') + '/';
+} // TODO: Replace uses with `new URL(url).origin` when ie11 is no longer supported.
+function getOrigin(url) {
+    var matches = ('' + url).match(/(https?|file|ftp):\/\/[^/]+/);
+    if (!matches) throw new Error('Origin not found');
+    return matches[0];
+}
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+exports.getOrigin = getOrigin;
+
+},{}],"hIcSM":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('eWMPo') + "test_background2.ba851580.jpg" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"7rId4":[function(require,module,exports) {
+module.exports = require('./helpers/bundle-url').getBundleURL('eWMPo') + "test_ground2.5cd69eba.jpg" + "?" + Date.now();
+
+},{"./helpers/bundle-url":"lgJ39"}],"2xfhv":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Background", ()=>Background
+);
+// Import PIXI
+var _pixiJs = require("pixi.js");
+class Background extends _pixiJs.Sprite {
+    constructor(texture, width, height){
+        super(texture);
+        // Setting width & height
+        this.width = width;
+        this.height = height;
+    }
+}
+
+},{"pixi.js":"dsYej","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kaOba":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Ground", ()=>Ground
+);
+// Import PIXI
+var _pixiJs = require("pixi.js");
+class Ground extends _pixiJs.Sprite {
+    constructor(texture){
+        super(texture);
+        // Setting the start position
+        this.x = 0;
+        this.y = 350;
+        // Setting the width & height
+        this.width = 500;
+        this.height = 70;
     }
 }
 
