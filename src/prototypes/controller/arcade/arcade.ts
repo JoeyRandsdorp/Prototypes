@@ -1,4 +1,4 @@
-import { Game } from "../xbox"
+import { Game } from "../controller_test"
 import { Joystick } from "./joystick"
 
 export class Arcade {
