@@ -1,1 +1,0 @@
-{"mappings":"AAAA;;;;;;AAMA","sources":["src/prototypes/style.css"],"sourcesContent":["body {\r\n    background-color: rgb(27, 25, 45);\r\n    margin: 0;\r\n    padding: 0;\r\n}\r\n\r\ncanvas {\r\n    margin: 20px calc(50vw - 400px);\r\n    background-color: white;\r\n}\r\n"],"names":[],"version":3,"file":"audio.1cde5dc4.css.map","sourceRoot":"/__parcel_source_root/"}
