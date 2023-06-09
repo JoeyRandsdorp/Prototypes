@@ -1,1 +1,1 @@
-Dit is de code van alle prototypes die ik gemaakt heb
+Dit zijn een paar typescript prototypes gemaakt ten voorbereiding van het maken van een game.
